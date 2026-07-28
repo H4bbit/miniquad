@@ -272,7 +272,7 @@ impl std::fmt::Debug for Icon {
 }
 
 // reasonable defaults for PC and mobiles are slightly different
-#[cfg(not(target_os = "android"))]
+#[cfg(any(not(target_os = "android"), feature = "termux-x11"))]
 impl Default for Conf {
     fn default() -> Conf {
         Conf {
@@ -289,7 +289,7 @@ impl Default for Conf {
     }
 }
 
-#[cfg(target_os = "android")]
+#[cfg(all(target_os = "android", not(feature = "termux-x11")))]
 impl Default for Conf {
     fn default() -> Conf {
         Conf {
@@ -297,9 +297,9 @@ impl Default for Conf {
             window_width: 800,
             window_height: 600,
             high_dpi: true,
-            fullscreen: true, //
+            fullscreen: true,
             sample_count: 1,
-            window_resizable: false, //
+            window_resizable: false,
             icon: Some(Icon::miniquad_logo()),
             platform: Default::default(),
         }
