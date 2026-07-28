@@ -178,7 +178,10 @@ macro_rules! __log_line {
     };
 }
 
-#[cfg(not(any(target_arch = "wasm32", target_os = "android", target_os = "ios")))]
+#[cfg(any(
+    not(any(target_arch = "wasm32", target_os = "android", target_os = "ios")),
+    all(target_os = "android", feature = "termux-x11")
+))]
 pub fn __private_api_log_lit(
     message: &str,
     _level: Level,
@@ -208,7 +211,7 @@ pub fn __private_api_log_lit(
     unsafe { log_fn(msg.as_ptr()) };
 }
 
-#[cfg(target_os = "android")]
+#[cfg(all(target_os = "android", not(feature = "termux-x11")))]
 pub fn __private_api_log_lit(
     message: &str,
     level: Level,

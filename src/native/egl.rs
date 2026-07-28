@@ -1,17 +1,26 @@
 #![allow(non_camel_case_types, non_snake_case, dead_code)]
 
-#[cfg(target_os = "linux")]
+#[cfg(any(
+    target_os = "linux",
+    all(target_os = "android", feature = "termux-x11")
+))]
 pub type EGLNativeDisplayType = *mut crate::native::linux_x11::libx11::Display;
-#[cfg(target_os = "linux")]
+#[cfg(any(
+    target_os = "linux",
+    all(target_os = "android", feature = "termux-x11")
+))]
 pub type EGLNativePixmapType = crate::native::linux_x11::libx11::Pixmap;
-#[cfg(target_os = "linux")]
+#[cfg(any(
+    target_os = "linux",
+    all(target_os = "android", feature = "termux-x11")
+))]
 pub type EGLNativeWindowType = crate::native::linux_x11::libx11::Window;
 
-#[cfg(target_os = "android")]
+#[cfg(all(target_os = "android", not(feature = "termux-x11")))]
 pub type EGLNativeDisplayType = *mut ();
-#[cfg(target_os = "android")]
+#[cfg(all(target_os = "android", not(feature = "termux-x11")))]
 pub type EGLNativePixmapType = ::core::ffi::c_ulong;
-#[cfg(target_os = "android")]
+#[cfg(all(target_os = "android", not(feature = "termux-x11")))]
 pub type EGLNativeWindowType = ::core::ffi::c_ulong;
 
 pub use core::ptr::null_mut;

@@ -39,17 +39,20 @@ pub fn load_file<F: Fn(Response) + 'static>(path: &str, on_loaded: F) {
     #[cfg(target_arch = "wasm32")]
     wasm::load_file(path, on_loaded);
 
-    #[cfg(target_os = "android")]
+    #[cfg(all(target_os = "android", not(feature = "termux-x11")))]
     load_file_android(path, on_loaded);
 
     #[cfg(target_os = "ios")]
     ios::load_file(path, on_loaded);
 
-    #[cfg(not(any(target_arch = "wasm32", target_os = "android", target_os = "ios")))]
+    #[cfg(any(
+        not(any(target_arch = "wasm32", target_os = "android", target_os = "ios")),
+        all(target_os = "android", feature = "termux-x11")
+    ))]
     load_file_desktop(path, on_loaded);
 }
 
-#[cfg(target_os = "android")]
+#[cfg(all(target_os = "android", not(feature = "termux-x11")))]
 fn load_file_android<F: Fn(Response)>(path: &str, on_loaded: F) {
     fn load_file_sync(path: &str) -> Response {
         use crate::native;
@@ -122,7 +125,10 @@ mod wasm {
     }
 }
 
-#[cfg(not(any(target_arch = "wasm32", target_os = "android", target_os = "ios")))]
+#[cfg(any(
+    not(any(target_arch = "wasm32", target_os = "android", target_os = "ios")),
+    all(target_os = "android", feature = "termux-x11")
+))]
 fn load_file_desktop<F: Fn(Response)>(path: &str, on_loaded: F) {
     fn load_file_sync(path: &str) -> Response {
         use std::fs::File;

@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-#[cfg(not(target_os = "android"))]
+#[cfg(any(not(target_os = "android"), feature = "termux-x11"))]
 use std::sync::mpsc;
 
 #[derive(Default)]
@@ -16,9 +16,9 @@ pub(crate) struct NativeDisplayData {
     pub high_dpi: bool,
     pub quit_requested: bool,
     pub quit_ordered: bool,
-    #[cfg(target_os = "android")]
+    #[cfg(all(target_os = "android", not(feature = "termux-x11")))]
     pub native_requests: Box<dyn Fn(Request) + Send>,
-    #[cfg(not(target_os = "android"))]
+    #[cfg(any(not(target_os = "android"), feature = "termux-x11"))]
     pub native_requests: mpsc::Sender<Request>,
     pub clipboard: Box<dyn Clipboard>,
     pub dropped_files: DroppedFiles,
@@ -40,8 +40,11 @@ impl NativeDisplayData {
     pub fn new(
         screen_width: i32,
         screen_height: i32,
-        #[cfg(target_os = "android")] native_requests: Box<dyn Fn(Request) + Send>,
-        #[cfg(not(target_os = "android"))] native_requests: mpsc::Sender<Request>,
+        #[cfg(all(target_os = "android", not(feature = "termux-x11")))] native_requests: Box<
+            dyn Fn(Request) + Send,
+        >,
+        #[cfg(any(not(target_os = "android"), feature = "termux-x11"))]
+        native_requests: mpsc::Sender<Request>,
         clipboard: Box<dyn Clipboard>,
     ) -> NativeDisplayData {
         NativeDisplayData {
@@ -87,19 +90,22 @@ pub trait Clipboard: Send + Sync {
 
 pub mod module;
 
-#[cfg(target_os = "linux")]
+#[cfg(any(
+    target_os = "linux",
+    all(target_os = "android", feature = "termux-x11")
+))]
 pub mod linux_x11;
 
 #[cfg(target_os = "linux")]
 pub mod linux_wayland;
 
-#[cfg(target_os = "android")]
+#[cfg(all(target_os = "android", not(feature = "termux-x11")))]
 pub mod android;
 
 #[cfg(target_os = "windows")]
 pub mod windows;
 
-#[cfg(target_os = "android")]
+#[cfg(all(target_os = "android", not(feature = "termux-x11")))]
 pub use android::*;
 
 #[cfg(target_arch = "wasm32")]

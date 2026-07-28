@@ -99,6 +99,7 @@ fn set_display(display: native::NativeDisplayData) {
 }
 /// This for now is Android specific since the process can continue running but the display
 /// is restarted. We support reinitializing the display.
+#[cfg(all(target_os = "android", not(feature = "termux-x11")))]
 fn set_or_replace_display(display: native::NativeDisplayData) {
     if let Some(m) = NATIVE_DISPLAY.get() {
         // Replace existing display
@@ -211,12 +212,12 @@ pub mod window {
     /// TODO: implement window focus events
     pub fn set_cursor_grab(grab: bool) {
         let d = native_display().lock().unwrap();
-        #[cfg(target_os = "android")]
+        #[cfg(all(target_os = "android", not(feature = "termux-x11")))]
         {
             (d.native_requests)(native::Request::SetCursorGrab(grab));
         }
 
-        #[cfg(not(target_os = "android"))]
+        #[cfg(any(not(target_os = "android"), feature = "termux-x11"))]
         {
             d.native_requests
                 .send(native::Request::SetCursorGrab(grab))
@@ -230,13 +231,20 @@ pub mod window {
     ///
     /// Does nothing without `conf.platform.blocking_event_loop`.
     pub fn schedule_update() {
-        #[cfg(all(target_os = "android", not(target_arch = "wasm32")))]
+        #[cfg(all(
+            target_os = "android",
+            not(target_arch = "wasm32"),
+            not(feature = "termux-x11")
+        ))]
         {
             let d = native_display().lock().unwrap();
             (d.native_requests)(native::Request::ScheduleUpdate);
         }
 
-        #[cfg(not(any(target_arch = "wasm32", target_os = "android")))]
+        #[cfg(any(
+            not(any(target_arch = "wasm32", target_os = "android")),
+            all(target_os = "android", feature = "termux-x11")
+        ))]
         {
             let d = native_display().lock().unwrap();
             d.native_requests
@@ -253,12 +261,12 @@ pub mod window {
     /// Show or hide the mouse cursor
     pub fn show_mouse(shown: bool) {
         let d = native_display().lock().unwrap();
-        #[cfg(target_os = "android")]
+        #[cfg(all(target_os = "android", not(feature = "termux-x11")))]
         {
             (d.native_requests)(native::Request::ShowMouse(shown));
         }
 
-        #[cfg(not(target_os = "android"))]
+        #[cfg(any(not(target_os = "android"), feature = "termux-x11"))]
         {
             d.native_requests
                 .send(native::Request::ShowMouse(shown))
@@ -269,12 +277,12 @@ pub mod window {
     /// Set the mouse cursor icon.
     pub fn set_mouse_cursor(cursor_icon: CursorIcon) {
         let d = native_display().lock().unwrap();
-        #[cfg(target_os = "android")]
+        #[cfg(all(target_os = "android", not(feature = "termux-x11")))]
         {
             (d.native_requests)(native::Request::SetMouseCursor(cursor_icon));
         }
 
-        #[cfg(not(target_os = "android"))]
+        #[cfg(any(not(target_os = "android"), feature = "termux-x11"))]
         {
             d.native_requests
                 .send(native::Request::SetMouseCursor(cursor_icon))
@@ -285,7 +293,7 @@ pub mod window {
     /// Set the application's window size.
     pub fn set_window_size(new_width: u32, new_height: u32) {
         let d = native_display().lock().unwrap();
-        #[cfg(target_os = "android")]
+        #[cfg(all(target_os = "android", not(feature = "termux-x11")))]
         {
             (d.native_requests)(native::Request::SetWindowSize {
                 new_width,
@@ -293,7 +301,7 @@ pub mod window {
             });
         }
 
-        #[cfg(not(target_os = "android"))]
+        #[cfg(any(not(target_os = "android"), feature = "termux-x11"))]
         {
             d.native_requests
                 .send(native::Request::SetWindowSize {
@@ -306,12 +314,12 @@ pub mod window {
 
     pub fn set_window_position(new_x: u32, new_y: u32) {
         let d = native_display().lock().unwrap();
-        #[cfg(target_os = "android")]
+        #[cfg(all(target_os = "android", not(feature = "termux-x11")))]
         {
             (d.native_requests)(native::Request::SetWindowPosition { new_x, new_y });
         }
 
-        #[cfg(not(target_os = "android"))]
+        #[cfg(any(not(target_os = "android"), feature = "termux-x11"))]
         {
             d.native_requests
                 .send(native::Request::SetWindowPosition { new_x, new_y })
@@ -329,12 +337,12 @@ pub mod window {
 
     pub fn set_fullscreen(fullscreen: bool) {
         let d = native_display().lock().unwrap();
-        #[cfg(target_os = "android")]
+        #[cfg(all(target_os = "android", not(feature = "termux-x11")))]
         {
             (d.native_requests)(native::Request::SetFullscreen(fullscreen));
         }
 
-        #[cfg(not(target_os = "android"))]
+        #[cfg(any(not(target_os = "android"), feature = "termux-x11"))]
         {
             d.native_requests
                 .send(native::Request::SetFullscreen(fullscreen))
@@ -370,12 +378,12 @@ pub mod window {
     /// Only works on Android right now.
     pub fn show_keyboard(show: bool) {
         let d = native_display().lock().unwrap();
-        #[cfg(target_os = "android")]
+        #[cfg(all(target_os = "android", not(feature = "termux-x11")))]
         {
             (d.native_requests)(native::Request::ShowKeyboard(show));
         }
 
-        #[cfg(not(target_os = "android"))]
+        #[cfg(any(not(target_os = "android"), feature = "termux-x11"))]
         {
             d.native_requests
                 .send(native::Request::ShowKeyboard(show))
@@ -388,20 +396,20 @@ pub mod window {
     /// This should be called when the text cursor moves to keep the IME
     /// candidate window near the insertion point.
     pub fn set_ime_position(x: i32, y: i32) {
-        let d = native_display().lock().unwrap();
-        #[cfg(target_os = "android")]
+        #[cfg(all(target_os = "android", not(feature = "termux-x11")))]
         {
             let _ = (x, y); // IME position not applicable on Android
         }
 
-        #[cfg(not(target_os = "android"))]
+        #[cfg(any(not(target_os = "android"), feature = "termux-x11"))]
         {
+            let d = native_display().lock().unwrap();
+
             d.native_requests
                 .send(native::Request::SetImePosition { x, y })
                 .unwrap();
         }
     }
-
     /// Enable or disable IME (Input Method Editor) for the window.
     /// When enabled, the IME will process keyboard input for CJK text input.
     /// When disabled, keyboard events are sent directly to the application,
@@ -410,20 +418,20 @@ pub mod window {
     /// # Arguments
     /// * `enabled` - `true` to enable IME (for text input), `false` to disable (for game controls)
     pub fn set_ime_enabled(enabled: bool) {
-        let d = native_display().lock().unwrap();
-        #[cfg(target_os = "android")]
+        #[cfg(all(target_os = "android", not(feature = "termux-x11")))]
         {
             let _ = enabled; // IME control not applicable on Android
         }
 
-        #[cfg(not(target_os = "android"))]
+        #[cfg(any(not(target_os = "android"), feature = "termux-x11"))]
         {
+            let d = native_display().lock().unwrap();
+
             d.native_requests
                 .send(native::Request::SetImeEnabled(enabled))
                 .unwrap();
         }
     }
-
     #[cfg(target_vendor = "apple")]
     pub fn apple_gfx_api() -> crate::conf::AppleGfxApi {
         let d = native_display().lock().unwrap();
@@ -489,9 +497,15 @@ where
         }
     }
 
-    #[cfg(target_os = "android")]
+    #[cfg(all(target_os = "android", not(feature = "termux-x11")))]
     unsafe {
         native::android::run(conf, f);
+    }
+
+    #[cfg(all(target_os = "android", feature = "termux-x11"))]
+    {
+        let mut f = Some(f);
+        native::linux_x11::run(&conf, &mut f).expect("X11 backend failed");
     }
 
     #[cfg(target_arch = "wasm32")]
